@@ -1,6 +1,12 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sistem Manajemen Data Pengguna</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+<head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sistem Manajemen Data Pengguna</title>
@@ -965,6 +971,78 @@
     </div>
 
     <script>
+// Inisialisasi Supabase
+updateStatistics();
+generateCaptcha();
+setupCharacterCounters();
+});
+
+
+// Load user data from memory with persistence
+async function loadUserData() {
+let { data, error } = await supabase.from("pegawai").select("*");
+if (error) {
+console.error("Gagal load dari Supabase:", error);
+return;
+}
+userData = data || [];
+updateStatistics();
+}
+
+
+// Save data function
+function saveData() {
+// (kode validasi dan pengumpulan data tetap sama)
+
+
+// Save to userData array in memory
+userData.push(formData);
+saveToStorage(); // Persist data
+
+
+// Simpan juga ke Supabase
+supabase.from("pegawai").insert([formData]).then(({ data, error }) => {
+if (error) {
+console.error("Gagal simpan ke Supabase:", error);
+} else {
+console.log("Data berhasil disimpan ke Supabase:", data);
+}
+});
+
+
+showAlert('success', 'Data berhasil disimpan!');
+resetForm();
+generateCaptcha();
+loadData();
+updateStatistics();
+}
+
+
+// Delete data
+function deleteData(id) {
+if (confirm('⚠️ Apakah Anda yakin ingin menghapus data ini? Tindakan ini tidak dapat dibatalkan.')) {
+userData = userData.filter(item => item.id !== id);
+saveToStorage(); // Persist changes
+supabase.from("pegawai").delete().eq("id", id).then(({ error }) => {
+if (error) console.error("Gagal hapus di Supabase:", error);
+});
+loadData();
+updateStatistics();
+const alertElement = document.createElement('div');
+alertElement.className = 'alert alert-success';
+alertElement.textContent = '✅ Data berhasil dihapus!';
+alertElement.style.display = 'block';
+document.querySelector('#admin-panel').insertBefore(alertElement, document.querySelector('.admin-controls'));
+setTimeout(() => {
+alertElement.remove();
+}, 3000);
+}
+}
+         // Inisialisasi Supabase
+        const SUPABASE_URL = "https://khyjefomvhvbzlzhzcup.supabase.co";
+        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtoeWplZm9tdmh2Ynpsemh6Y3VwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY4NjIzNjAsImV4cCI6MjA3MjQzODM2MH0.Ev9T1M_WV1TZBr6EehYfmTRT9MrnBQMkH3AajjOQ910
+";  // anon public key dari Supabase
+        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         // Global variables - Data persists in memory across multiple users
         let userData = JSON.parse(sessionStorage.getItem('employeeData') || '[]');
         let childCounter = 0;
