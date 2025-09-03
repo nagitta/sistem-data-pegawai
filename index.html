@@ -992,6 +992,15 @@ updateStatistics();
 
 // Save data function
 function saveData() {
+// Simpan juga ke Supabase
+supabase.from("pegawai").insert([formData]).then(({ data, error }) => {
+  if (error) {
+    console.error("❌ Gagal simpan ke Supabase:", error);
+  } else {
+    console.log("✅ Data berhasil disimpan ke Supabase:", data);
+  }
+});
+
 // (kode validasi dan pengumpulan data tetap sama)
 
 
@@ -1059,6 +1068,16 @@ alertElement.remove();
 
         // Load user data from memory with persistence
         function loadUserData() {
+            async function loadUserData() {
+  let { data, error } = await supabase.from("pegawai").select("*");
+  if (error) {
+    console.error("❌ Gagal load data:", error);
+    return;
+  }
+  userData = data || [];
+  updateStatistics();
+}
+
             updateStatistics();
         }
 
@@ -1646,6 +1665,9 @@ alertElement.remove();
         }
 
         function deleteData(id) {
+            supabase.from("pegawai").delete().eq("id", id).then(({ error }) => {
+  if (error) console.error("❌ Gagal hapus di Supabase:", error);
+});
             if (confirm('⚠️ Apakah Anda yakin ingin menghapus data ini? Tindakan ini tidak dapat dibatalkan.')) {
                 userData = userData.filter(item => item.id !== id);
                 saveToStorage(); // Persist changes
