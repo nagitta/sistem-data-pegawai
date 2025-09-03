@@ -1,0 +1,1907 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistem Manajemen Data Pengguna</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Georgia', 'Times New Roman', serif;
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 50%, #2c3e50 100%);
+            min-height: 100vh;
+            color: #2c3e50;
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(255, 206, 84, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(120, 119, 198, 0.2) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .header {
+            text-align: center;
+            color: #f8f9fa;
+            margin-bottom: 30px;
+            background: rgba(44, 62, 80, 0.9);
+            padding: 40px 20px;
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .header h1 {
+            font-size: 2.8em;
+            margin-bottom: 15px;
+            text-shadow: 2px 2px 8px rgba(0,0,0,0.5);
+            font-weight: 300;
+            letter-spacing: 2px;
+        }
+
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+            font-style: italic;
+        }
+
+        .role-selector {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        .role-btn {
+            padding: 18px 40px;
+            background: rgba(255, 255, 255, 0.95);
+            color: #2c3e50;
+            border: 2px solid #bdc3c7;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            font-size: 16px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .role-btn:hover {
+            background: #ecf0f1;
+            transform: translateY(-5px) scale(1.05);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
+            border-color: #95a5a6;
+        }
+
+        .role-btn.active {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+            border-color: #2980b9;
+            transform: translateY(-3px);
+            box-shadow: 0 15px 40px rgba(52, 152, 219, 0.4);
+        }
+
+        .section {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 25px;
+            padding: 40px;
+            margin-bottom: 30px;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            display: none;
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: 600;
+            color: #2c3e50;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            padding: 15px 20px;
+            border: 2px solid #ecf0f1;
+            border-radius: 12px;
+            font-size: 15px;
+            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(5px);
+        }
+
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 0 4px rgba(52, 152, 219, 0.15);
+            transform: translateY(-2px);
+        }
+
+        .form-hint {
+            font-size: 12px;
+            color: #7f8c8d;
+            margin-top: 6px;
+            font-style: italic;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 25px;
+        }
+
+        .btn {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 35px rgba(0, 0, 0, 0.25);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #2980b9, #21618c);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #95a5a6, #7f8c8d);
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: linear-gradient(135deg, #7f8c8d, #6c7b7d);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #27ae60, #229954);
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: linear-gradient(135deg, #229954, #1e8449);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: linear-gradient(135deg, #c0392b, #a93226);
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, #f39c12, #e67e22);
+            color: white;
+        }
+
+        .btn-warning:hover {
+            background: linear-gradient(135deg, #e67e22, #d35400);
+        }
+
+        .section-title {
+            color: #2c3e50;
+            border-bottom: 3px solid #3498db;
+            padding-bottom: 15px;
+            margin-bottom: 35px;
+            font-size: 2em;
+            font-weight: 300;
+            text-align: center;
+            position: relative;
+        }
+
+        .section-title::after {
+            content: '';
+            position: absolute;
+            bottom: -3px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60px;
+            height: 3px;
+            background: linear-gradient(135deg, #f39c12, #e67e22);
+            border-radius: 2px;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+        }
+
+        .data-table th, .data-table td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #ecf0f1;
+        }
+
+        .data-table th {
+            background: linear-gradient(135deg, #34495e, #2c3e50);
+            color: white;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-size: 13px;
+        }
+
+        .data-table tbody tr {
+            transition: all 0.3s ease;
+        }
+
+        .data-table tbody tr:hover {
+            background: linear-gradient(135deg, #ecf0f1, #d5dbdb);
+            transform: scale(1.01);
+        }
+
+        .admin-login {
+            max-width: 450px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        .admin-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            gap: 15px;
+            background: rgba(52, 73, 94, 0.05);
+            padding: 20px;
+            border-radius: 15px;
+        }
+
+        .search-box {
+            padding: 12px 20px;
+            border: 2px solid #ecf0f1;
+            border-radius: 25px;
+            width: 350px;
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(5px);
+        }
+
+        .search-box:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.15);
+        }
+
+        .child-form {
+            border: 2px solid #ecf0f1;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, #f8f9fa, #ecf0f1);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+        }
+
+        .child-form h4 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .progress-indicator {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 40px;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+        }
+
+        .progress-step {
+            display: flex;
+            align-items: center;
+            color: #bdc3c7;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .progress-step.active {
+            color: #3498db;
+        }
+
+        .progress-step.completed {
+            color: #27ae60;
+        }
+
+        .step-number {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #bdc3c7;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .progress-step.active .step-number {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            box-shadow: 0 5px 15px rgba(52, 152, 219, 0.4);
+        }
+
+        .progress-step.completed .step-number {
+            background: linear-gradient(135deg, #27ae60, #229954);
+            box-shadow: 0 5px 15px rgba(39, 174, 96, 0.4);
+        }
+
+        .form-navigation {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 40px;
+            padding-top: 30px;
+            border-top: 2px solid #ecf0f1;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(44, 62, 80, 0.8);
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-content {
+            background: rgba(255, 255, 255, 0.95);
+            margin: 3% auto;
+            padding: 40px;
+            border-radius: 20px;
+            width: 85%;
+            max-width: 800px;
+            max-height: 85vh;
+            overflow-y: auto;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .close {
+            color: #95a5a6;
+            float: right;
+            font-size: 32px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .close:hover {
+            color: #e74c3c;
+            transform: scale(1.1);
+        }
+
+        .alert {
+            padding: 18px 25px;
+            margin-bottom: 25px;
+            border-radius: 12px;
+            display: none;
+            font-weight: 500;
+            backdrop-filter: blur(10px);
+        }
+
+        .alert-success {
+            background: linear-gradient(135deg, rgba(39, 174, 96, 0.9), rgba(34, 153, 84, 0.9));
+            color: white;
+            border: 1px solid rgba(39, 174, 96, 0.3);
+            box-shadow: 0 10px 25px rgba(39, 174, 96, 0.2);
+        }
+
+        .alert-danger {
+            background: linear-gradient(135deg, rgba(231, 76, 60, 0.9), rgba(192, 57, 43, 0.9));
+            color: white;
+            border: 1px solid rgba(231, 76, 60, 0.3);
+            box-shadow: 0 10px 25px rgba(231, 76, 60, 0.2);
+        }
+
+        .captcha-container {
+            background: linear-gradient(135deg, rgba(236, 240, 241, 0.9), rgba(189, 195, 199, 0.9));
+            border: 2px solid #bdc3c7;
+            border-radius: 20px;
+            padding: 30px;
+            margin: 30px 0;
+            text-align: center;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+        }
+
+        .captcha-display {
+            background: linear-gradient(135deg, #2c3e50, #34495e);
+            color: white;
+            font-size: 28px;
+            font-weight: bold;
+            padding: 20px 40px;
+            border-radius: 12px;
+            margin: 15px 0;
+            letter-spacing: 4px;
+            font-family: 'Courier New', monospace;
+            text-shadow: 2px 2px 6px rgba(0,0,0,0.5);
+            user-select: none;
+            display: inline-block;
+            min-width: 180px;
+            box-shadow: 0 10px 25px rgba(44, 62, 80, 0.3);
+        }
+
+        .captcha-input {
+            font-size: 20px;
+            text-align: center;
+            letter-spacing: 3px;
+            font-weight: bold;
+            border: 3px solid #bdc3c7;
+            padding: 15px;
+            width: 220px;
+            margin: 15px;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.9);
+        }
+
+        .captcha-input:focus {
+            border-color: #3498db;
+            box-shadow: 0 0 0 4px rgba(52, 152, 219, 0.15);
+        }
+
+        .captcha-refresh {
+            background: linear-gradient(135deg, #95a5a6, #7f8c8d);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-left: 15px;
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+
+        .captcha-refresh:hover {
+            background: linear-gradient(135deg, #7f8c8d, #6c7b7d);
+            transform: scale(1.05);
+        }
+
+        .char-counter {
+            font-size: 11px;
+            color: #7f8c8d;
+            text-align: right;
+            margin-top: 5px;
+            font-weight: 500;
+        }
+
+        .char-counter.warning {
+            color: #f39c12;
+            font-weight: bold;
+        }
+
+        .char-counter.danger {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+
+        .nip-status {
+            font-size: 12px;
+            margin-top: 8px;
+            padding: 8px 15px;
+            border-radius: 8px;
+            display: none;
+            font-weight: 500;
+        }
+
+        .nip-status.available {
+            background: linear-gradient(135deg, rgba(39, 174, 96, 0.9), rgba(34, 153, 84, 0.9));
+            color: white;
+            border: 1px solid rgba(39, 174, 96, 0.3);
+            display: block;
+        }
+
+        .nip-status.duplicate {
+            background: linear-gradient(135deg, rgba(231, 76, 60, 0.9), rgba(192, 57, 43, 0.9));
+            color: white;
+            border: 1px solid rgba(231, 76, 60, 0.3);
+            display: block;
+        }
+
+        .stats-container {
+            margin-bottom: 30px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 25px;
+        }
+
+        .stat-card {
+            padding: 25px;
+            border-radius: 15px;
+            text-align: center;
+            color: white;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 45px rgba(0, 0, 0, 0.3);
+        }
+
+        .stat-card h3 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: 300;
+        }
+
+        .stat-card p {
+            font-size: 1.1em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            opacity: 0.9;
+        }
+
+        .stat-total {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+        }
+
+        .stat-married {
+            background: linear-gradient(135deg, #27ae60, #229954);
+        }
+
+        .stat-single {
+            background: linear-gradient(135deg, #f39c12, #e67e22);
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+            
+            .header h1 {
+                font-size: 2.2em;
+            }
+            
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .admin-controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .search-box {
+                width: 100%;
+            }
+
+            .role-selector {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Classic modern form styling */
+        .form-step-header {
+            background: linear-gradient(135deg, #ecf0f1, #d5dbdb);
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            border-left: 5px solid #3498db;
+        }
+
+        .form-step-header h3 {
+            color: #2c3e50;
+            font-weight: 400;
+            font-size: 1.5em;
+            margin: 0;
+        }
+
+        /* Enhanced table styling */
+        .data-table-container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏛️ Sistem Manajemen Data Pegawai</h1>
+            <p>Platform Modern untuk Pengelolaan Data Kepegawaian</p>
+        </div>
+
+        <div class="role-selector">
+            <button class="role-btn active" onclick="showSection('user')">👤 Portal Pengguna</button>
+            <button class="role-btn" onclick="showSection('admin')">🔐 Panel Admin</button>
+        </div>
+
+        <!-- User Section -->
+        <div id="user-section" class="section active">
+            <h2 class="section-title">📝 Form Pendaftaran Data Pegawai</h2>
+            
+            <div class="progress-indicator">
+                <div class="progress-step active" id="step1">
+                    <span class="step-number">1</span>
+                    <span>Data Utama</span>
+                </div>
+                <div class="progress-step" id="step2" style="margin-left: 30px;">
+                    <span class="step-number">2</span>
+                    <span>Data Lanjutan</span>
+                </div>
+            </div>
+
+            <div class="alert alert-success" id="successAlert">
+                ✅ Data berhasil disimpan!
+            </div>
+
+            <div class="alert alert-danger" id="errorAlert">
+                ❌ Mohon lengkapi semua field yang wajib diisi!
+            </div>
+
+            <!-- Step 1: Data Utama -->
+            <div id="form-step1">
+                <div class="form-step-header">
+                    <h3>📋 Data Utama Pegawai</h3>
+                </div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="nip">NIP *</label>
+                        <input type="text" id="nip" placeholder="Contoh: 198501012010011001" onblur="checkNIPDuplicate()">
+                        <div class="form-hint">⚠️ Masukkan 18 digit angka tanpa spasi dan karakter khusus</div>
+                        <div id="nip-status" class="nip-status"></div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="nama">Nama Lengkap *</label>
+                        <input type="text" id="nama" placeholder="Contoh: DR. BUDI SANTOSO, S.H., M.H." class="auto-uppercase">
+                        <div class="form-hint">✏️ Otomatis diubah ke huruf KAPITAL, Sertakan gelar depan dan belakang jika ada</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="ktp">No. KTP *</label>
+                        <input type="text" id="ktp" placeholder="Contoh: 3374010101850001">
+                        <div class="form-hint">⚠️ Masukkan 16 digit angka tanpa spasi dan karakter khusus</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="alamat">Alamat *</label>
+                        <textarea id="alamat" rows="3" placeholder="Contoh: JL. MERDEKA NO. 123 RT 001 RW 002 KEL. SEMARANG" class="auto-uppercase" maxlength="60"></textarea>
+                        <div class="form-hint">🏠 Otomatis diubah ke huruf KAPITAL, maksimal 60 karakter</div>
+                        <div id="alamat-counter" class="char-counter">0/60</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="tempat_lahir">Tempat Lahir *</label>
+                        <input type="text" id="tempat_lahir" placeholder="Contoh: SEMARANG" class="auto-uppercase">
+                        <div class="form-hint">🌏 Otomatis diubah ke huruf KAPITAL, Nama kota/kabupaten tempat lahir</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="tanggal_lahir">Tanggal Lahir *</label>
+                        <input type="date" id="tanggal_lahir">
+                        <div class="form-hint">📅 Pilih tanggal lahir Anda</div>
+                    </div>
+                </div>
+                
+                <!-- Captcha Verification -->
+                <div class="captcha-container">
+                    <h4>🔒 Verifikasi Keamanan</h4>
+                    <p>Masukkan kode captcha di bawah ini untuk melanjutkan:</p>
+                    <div class="captcha-display" id="captcha-display"></div>
+                    <button type="button" class="captcha-refresh" onclick="generateCaptcha()">🔄 Refresh</button>
+                    <br>
+                    <input type="text" class="captcha-input" id="captcha-input" placeholder="Masukkan kode" maxlength="6">
+                    <div class="form-hint">🛡️ Captcha diperlukan untuk keamanan data</div>
+                </div>
+                
+                <div class="form-navigation">
+                    <div></div>
+                    <button class="btn btn-primary" onclick="nextStep()">Lanjut ke Data Lanjutan →</button>
+                </div>
+            </div>
+
+            <!-- Step 2: Data Lanjutan -->
+            <div id="form-step2" style="display: none;">
+                <div class="form-step-header">
+                    <h3>📄 Data Lanjutan Pegawai</h3>
+                </div>
+                
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="agama">Agama</label>
+                        <select id="agama">
+                            <option value="">Pilih Agama</option>
+                            <option value="ISLAM">Islam</option>
+                            <option value="KRISTEN">Kristen</option>
+                            <option value="KATOLIK">Katolik</option>
+                            <option value="HINDU">Hindu</option>
+                            <option value="BUDDHA">Buddha</option>
+                            <option value="KONGHUCU">Konghucu</option>
+                        </select>
+                        <div class="form-hint">🕌 Pilih agama yang dianut</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="npwp">NPWP</label>
+                        <input type="text" id="npwp" placeholder="Contoh: 123456789012345">
+                        <div class="form-hint">💳 15 digit angka tanpa spasi dan karakter khusus, wajib diisi</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="no_hp">No. HP</label>
+                        <input type="text" id="no_hp" placeholder="Contoh: 081234567890">
+                        <div class="form-hint">📱 Dimulai dengan 08, tanpa spasi</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="no_rekening">No. Rekening</label>
+                        <input type="text" id="no_rekening" placeholder="Contoh: 1234567890">
+                        <div class="form-hint">🏦 Angka tanpa spasi dan karakter khusus</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="status_pernikahan">Status Pernikahan</label>
+                        <select id="status_pernikahan" onchange="toggleMarriageFields()">
+                            <option value="">Pilih Status</option>
+                            <option value="BELUM_MENIKAH">Belum Menikah</option>
+                            <option value="MENIKAH">Menikah</option>
+                            <option value="CERAI_HIDUP">Cerai Hidup</option>
+                            <option value="CERAI_MATI">Cerai Mati</option>
+                        </select>
+                        <div class="form-hint">💍 Status pernikahan saat ini</div>
+                    </div>
+                </div>
+
+                <!-- Marriage Details -->
+                <div id="marriage-details" style="display: none;">
+                    <div class="form-step-header">
+                        <h3>👨‍👩‍👧‍👦 Informasi Keluarga</h3>
+                    </div>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="nama_pasangan">Nama Suami/Istri</label>
+                            <input type="text" id="nama_pasangan" placeholder="Nama lengkap suami/istri" class="auto-uppercase">
+                            <div class="form-hint">💑 Otomatis diubah ke huruf KAPITAL</div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="tempat_lahir_pasangan">Tempat Lahir Suami/Istri</label>
+                            <input type="text" id="tempat_lahir_pasangan" placeholder="Contoh: JAKARTA" class="auto-uppercase">
+                            <div class="form-hint">🌏 Otomatis diubah ke huruf KAPITAL, Nama kota/kabupaten tempat lahir</div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="tanggal_lahir_pasangan">Tanggal Lahir Suami/Istri</label>
+                            <input type="date" id="tanggal_lahir_pasangan">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="tanggal_pernikahan">Tanggal Pernikahan</label>
+                            <input type="date" id="tanggal_pernikahan">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="tanggal_cerai">Tanggal Cerai (jika ada)</label>
+                            <input type="date" id="tanggal_cerai">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="tanggal_wafat">Tanggal Wafat (jika ada)</label>
+                            <input type="date" id="tanggal_wafat">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="pekerjaan_pasangan">Pekerjaan Suami/Istri</label>
+                            <input type="text" id="pekerjaan_pasangan" placeholder="Pekerjaan suami/istri" class="auto-uppercase">
+                            <div class="form-hint">💼 Otomatis diubah ke huruf KAPITAL</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Children Information -->
+                <div id="children-section">
+                    <div class="form-step-header">
+                        <h3>👶 Informasi Anak</h3>
+                    </div>
+                    <div id="children-forms"></div>
+                    <button type="button" class="btn btn-secondary" onclick="addChild()" style="margin-bottom: 20px;">+ Tambah Data Anak</button>
+                </div>
+                
+                <div class="form-navigation">
+                    <button class="btn btn-secondary" onclick="prevStep()">← Kembali</button>
+                    <button class="btn btn-success" onclick="saveData()">💾 Simpan Data</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Admin Section -->
+        <div id="admin-section" class="section">
+            <div id="admin-login" class="admin-login">
+                <h2 class="section-title">🔐 Login Admin</h2>
+                <div class="form-group">
+                    <label for="admin-password">Password Admin</label>
+                    <input type="password" id="admin-password" placeholder="Masukkan password admin">
+                    <div class="form-hint">🔑 Masukkan password admin untuk akses panel</div>
+                </div>
+                <button class="btn btn-primary" onclick="adminLogin()">🚪 Masuk Admin</button>
+            </div>
+
+            <div id="admin-panel" style="display: none;">
+                <h2 class="section-title">📊 Panel Administrasi</h2>
+                
+                <div class="admin-controls">
+                    <input type="text" class="search-box" id="search-input" placeholder="🔍 Cari berdasarkan nama, NIP, atau KTP..." onkeyup="searchData()">
+                    <div>
+                        <button class="btn btn-success" onclick="exportToExcel()">📊 Export Excel</button>
+                        <button class="btn btn-warning" onclick="clearAllData()">🗑️ Hapus Semua</button>
+                        <button class="btn btn-secondary" onclick="adminLogout()">🚪 Logout</button>
+                    </div>
+                </div>
+
+                <div class="stats-container">
+                    <div class="stats-grid">
+                        <div class="stat-card stat-total">
+                            <h3 id="total-records">0</h3>
+                            <p>Total Pegawai</p>
+                        </div>
+                        <div class="stat-card stat-married">
+                            <h3 id="married-count">0</h3>
+                            <p>Sudah Menikah</p>
+                        </div>
+                        <div class="stat-card stat-single">
+                            <h3 id="single-count">0</h3>
+                            <p>Belum Menikah</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="data-table-container">
+                    <table class="data-table" id="data-table">
+                        <thead>
+                            <tr>
+                                <th>No</th>
+                                <th>NIP</th>
+                                <th>Nama</th>
+                                <th>No. KTP</th>
+                                <th>Alamat</th>
+                                <th>TTL</th>
+                                <th>Status</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="data-tbody">
+                            <tr>
+                                <td colspan="8" style="text-align: center; color: #7f8c8d; font-style: italic;">Belum ada data tersimpan</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for detailed view -->
+    <div id="detailModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <div id="modal-body"></div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables - Data persists in memory across multiple users
+        let userData = JSON.parse(sessionStorage.getItem('employeeData') || '[]');
+        let childCounter = 0;
+        let currentStep = 1;
+        let currentCaptcha = '';
+
+        // Initialize application
+        document.addEventListener('DOMContentLoaded', function() {
+            loadUserData();
+            updateStatistics();
+            generateCaptcha();
+            setupCharacterCounters();
+        });
+
+        // Load user data from memory with persistence
+        function loadUserData() {
+            updateStatistics();
+        }
+
+        // Save data to session storage for persistence
+        function saveToStorage() {
+            sessionStorage.setItem('employeeData', JSON.stringify(userData));
+        }
+
+        // Character counter for alamat field
+        function setupCharacterCounters() {
+            const alamatField = document.getElementById('alamat');
+            const alamatCounter = document.getElementById('alamat-counter');
+            
+            alamatField.addEventListener('input', function() {
+                const currentLength = this.value.length;
+                const maxLength = 60;
+                
+                alamatCounter.textContent = `${currentLength}/${maxLength}`;
+                
+                if (currentLength > 50) {
+                    alamatCounter.className = 'char-counter warning';
+                } else if (currentLength >= 60) {
+                    alamatCounter.className = 'char-counter danger';
+                } else {
+                    alamatCounter.className = 'char-counter';
+                }
+            });
+        }
+
+        // Check NIP duplicate
+        function checkNIPDuplicate() {
+            const nipInput = document.getElementById('nip');
+            const nipStatus = document.getElementById('nip-status');
+            const nip = nipInput.value.trim();
+            
+            if (!nip) {
+                nipStatus.style.display = 'none';
+                return;
+            }
+            
+            const existingData = userData.find(item => item.nip === nip);
+            
+            if (existingData) {
+                nipStatus.textContent = '⚠️ NIP sudah terdaftar! Gunakan NIP yang berbeda.';
+                nipStatus.className = 'nip-status duplicate';
+                nipInput.style.borderColor = '#e74c3c';
+            } else {
+                nipStatus.textContent = '✅ NIP tersedia dan dapat digunakan.';
+                nipStatus.className = 'nip-status available';
+                nipInput.style.borderColor = '#27ae60';
+            }
+        }
+
+        // Role switching
+        function showSection(role) {
+            // Update button states
+            document.querySelectorAll('.role-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            // Show/hide sections
+            document.querySelectorAll('.section').forEach(section => section.classList.remove('active'));
+            document.getElementById(role + '-section').classList.add('active');
+            
+            if (role === 'admin') {
+                loadData();
+                updateStatistics();
+            }
+        }
+
+        // Form step navigation
+        function nextStep() {
+            // Validate required fields in step 1
+            const requiredFields = ['nip', 'nama', 'ktp', 'alamat', 'tempat_lahir', 'tanggal_lahir'];
+            let isValid = true;
+            
+            requiredFields.forEach(fieldId => {
+                const field = document.getElementById(fieldId);
+                if (!field.value.trim()) {
+                    field.style.borderColor = '#e74c3c';
+                    isValid = false;
+                } else {
+                    field.style.borderColor = '#ecf0f1';
+                }
+            });
+
+            if (!isValid) {
+                showAlert('error', 'Mohon lengkapi semua field yang wajib diisi (ditandai *)');
+                return;
+            }
+
+            // Check for NIP duplicate
+            const nip = document.getElementById('nip').value;
+            const existingData = userData.find(item => item.nip === nip);
+            if (existingData) {
+                showAlert('error', 'NIP sudah terdaftar! Gunakan NIP yang berbeda.');
+                document.getElementById('nip').focus();
+                return;
+            }
+
+            // Validate formats
+            if (!validateNIP(document.getElementById('nip').value)) {
+                showAlert('error', 'Format NIP tidak valid! Harus berupa angka tanpa spasi dan karakter khusus.');
+                return;
+            }
+
+            if (!validateKTP(document.getElementById('ktp').value)) {
+                showAlert('error', 'Format KTP tidak valid! Harus berupa 16 digit angka.');
+                return;
+            }
+
+            // Validate captcha
+            const captchaInput = document.getElementById('captcha-input').value;
+            if (!captchaInput) {
+                showAlert('error', 'Mohon masukkan kode captcha!');
+                document.getElementById('captcha-input').focus();
+                return;
+            }
+            
+            if (captchaInput.toUpperCase() !== currentCaptcha) {
+                showAlert('error', 'Kode captcha salah! Silakan coba lagi.');
+                document.getElementById('captcha-input').value = '';
+                document.getElementById('captcha-input').focus();
+                generateCaptcha();
+                return;
+            }
+
+            currentStep = 2;
+            document.getElementById('form-step1').style.display = 'none';
+            document.getElementById('form-step2').style.display = 'block';
+            
+            // Update progress
+            document.getElementById('step1').classList.add('completed');
+            document.getElementById('step1').classList.remove('active');
+            document.getElementById('step2').classList.add('active');
+        }
+
+        function prevStep() {
+            currentStep = 1;
+            document.getElementById('form-step2').style.display = 'none';
+            document.getElementById('form-step1').style.display = 'block';
+            
+            // Update progress
+            document.getElementById('step2').classList.remove('active');
+            document.getElementById('step1').classList.add('active');
+            document.getElementById('step1').classList.remove('completed');
+        }
+
+        // Captcha functions
+        function generateCaptcha() {
+            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+            let captcha = '';
+            for (let i = 0; i < 6; i++) {
+                captcha += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            currentCaptcha = captcha;
+            document.getElementById('captcha-display').textContent = captcha;
+            document.getElementById('captcha-input').value = '';
+        }
+
+        // Form validation functions
+        function validateNIP(nip) {
+            return /^\d+$/.test(nip) && nip.length >= 10;
+        }
+
+        function validateKTP(ktp) {
+            return /^\d{16}$/.test(ktp);
+        }
+
+        function validateHP(hp) {
+            return /^08\d{8,}$/.test(hp);
+        }
+
+        function validateNPWP(npwp) {
+            return /^\d{15}$/.test(npwp);
+        }
+
+        // Marriage status handler
+        function toggleMarriageFields() {
+            const status = document.getElementById('status_pernikahan').value;
+            const marriageDetails = document.getElementById('marriage-details');
+            
+            if (status === 'MENIKAH' || status === 'CERAI_HIDUP' || status === 'CERAI_MATI') {
+                marriageDetails.style.display = 'block';
+            } else {
+                marriageDetails.style.display = 'none';
+            }
+        }
+
+        // Children management
+        function addChild() {
+            if (childCounter >= 10) {
+                showAlert('error', 'Maksimal 10 data anak yang dapat ditambahkan.');
+                return;
+            }
+            
+            childCounter++;
+            const childrenForms = document.getElementById('children-forms');
+            const childForm = document.createElement('div');
+            childForm.className = 'child-form';
+            childForm.innerHTML = `
+                <h4>Anak ke-${childCounter}</h4>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Nama Anak</label>
+                        <input type="text" id="anak_nama_${childCounter}" placeholder="Nama lengkap anak" class="auto-uppercase">
+                        <div class="form-hint">👶 Otomatis diubah ke huruf KAPITAL</div>
+                    </div>
+                    <div class="form-group">
+                        <label>Tempat Lahir</label>
+                        <input type="text" id="anak_tempat_lahir_${childCounter}" placeholder="Tempat lahir anak" class="auto-uppercase">
+                        <div class="form-hint">🏠 Otomatis diubah ke huruf KAPITAL</div>
+                    </div>
+                    <div class="form-group">
+                        <label>Tanggal Lahir</label>
+                        <input type="date" id="anak_tanggal_lahir_${childCounter}">
+                    </div>
+                    <div class="form-group">
+                        <label>Jenis Kelamin</label>
+                        <select id="anak_jenis_kelamin_${childCounter}">
+                            <option value="">Pilih</option>
+                            <option value="LAKI-LAKI">Laki-laki</option>
+                            <option value="PEREMPUAN">Perempuan</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Pekerjaan</label>
+                        <input type="text" id="anak_pekerjaan_${childCounter}" placeholder="Pekerjaan anak (jika sudah bekerja)" class="auto-uppercase">
+                        <div class="form-hint">💼 Otomatis diubah ke huruf KAPITAL</div>
+                    </div>
+                </div>
+                <button type="button" class="btn btn-danger" onclick="removeChild(${childCounter})">🗑️ Hapus Anak ke-${childCounter}</button>
+            `;
+            
+            childrenForms.appendChild(childForm);
+        }
+
+        function removeChild(childId) {
+            const childForm = event.target.closest('.child-form');
+            childForm.remove();
+            
+            // Reorder remaining children
+            const remainingForms = document.querySelectorAll('.child-form');
+            childCounter = remainingForms.length;
+            
+            remainingForms.forEach((form, index) => {
+                const h4 = form.querySelector('h4');
+                h4.textContent = `Anak ke-${index + 1}`;
+                
+                // Update button text
+                const removeBtn = form.querySelector('.btn-danger');
+                removeBtn.textContent = `🗑️ Hapus Anak ke-${index + 1}`;
+            });
+        }
+
+        // Save data function
+        function saveData() {
+            // Validate optional fields with formats
+            const npwp = document.getElementById('npwp').value;
+            if (npwp && !validateNPWP(npwp)) {
+                showAlert('error', 'Format NPWP tidak valid! Harus berupa 15 digit angka.');
+                return;
+            }
+
+            const noHp = document.getElementById('no_hp').value;
+            if (noHp && !validateHP(noHp)) {
+                showAlert('error', 'Format No. HP tidak valid! Harus dimulai dengan 08.');
+                return;
+            }
+
+            // Collect form data
+            const formData = {
+                id: Date.now() + Math.random(), // Ensure unique ID
+                timestamp: new Date().toISOString(),
+                // Main data
+                nip: document.getElementById('nip').value,
+                nama: document.getElementById('nama').value.toUpperCase(),
+                ktp: document.getElementById('ktp').value,
+                alamat: document.getElementById('alamat').value.toUpperCase(),
+                tempat_lahir: document.getElementById('tempat_lahir').value.toUpperCase(),
+                tanggal_lahir: document.getElementById('tanggal_lahir').value,
+                // Additional data
+                agama: document.getElementById('agama').value,
+                npwp: document.getElementById('npwp').value,
+                no_hp: document.getElementById('no_hp').value,
+                no_rekening: document.getElementById('no_rekening').value,
+                status_pernikahan: document.getElementById('status_pernikahan').value,
+                nama_pasangan: document.getElementById('nama_pasangan').value.toUpperCase(),
+                tempat_lahir_pasangan: document.getElementById('tempat_lahir_pasangan').value.toUpperCase(),
+                tanggal_lahir_pasangan: document.getElementById('tanggal_lahir_pasangan').value,
+                tanggal_pernikahan: document.getElementById('tanggal_pernikahan').value,
+                tanggal_cerai: document.getElementById('tanggal_cerai').value,
+                tanggal_wafat: document.getElementById('tanggal_wafat').value,
+                pekerjaan_pasangan: document.getElementById('pekerjaan_pasangan').value.toUpperCase(),
+                // Children data
+                children: []
+            };
+
+            // Collect children data - Enhanced to capture all children
+            const childrenForms = document.querySelectorAll('.child-form');
+            childrenForms.forEach((form, index) => {
+                const childNumber = index + 1;
+                const namaAnak = form.querySelector(`input[id*="anak_nama_"]`);
+                const tempatLahirAnak = form.querySelector(`input[id*="anak_tempat_lahir_"]`);
+                const tanggalLahirAnak = form.querySelector(`input[id*="anak_tanggal_lahir_"]`);
+                const jenisKelaminAnak = form.querySelector(`select[id*="anak_jenis_kelamin_"]`);
+                const pekerjaanAnak = form.querySelector(`input[id*="anak_pekerjaan_"]`);
+                
+                if (namaAnak && namaAnak.value.trim()) {
+                    formData.children.push({
+                        urutan: childNumber,
+                        nama: namaAnak.value.toUpperCase().trim(),
+                        tempat_lahir: tempatLahirAnak ? tempatLahirAnak.value.toUpperCase().trim() : '',
+                        tanggal_lahir: tanggalLahirAnak ? tanggalLahirAnak.value : '',
+                        jenis_kelamin: jenisKelaminAnak ? jenisKelaminAnak.value : '',
+                        pekerjaan: pekerjaanAnak ? pekerjaanAnak.value.toUpperCase().trim() : ''
+                    });
+                }
+            });
+
+            // Save to userData array in memory
+            userData.push(formData);
+            saveToStorage(); // Persist data
+
+            showAlert('success', 'Data berhasil disimpan!');
+            
+            // Reset form
+            resetForm();
+            
+            // Generate new captcha
+            generateCaptcha();
+            
+            // Update admin data if admin panel is open
+            loadData();
+            updateStatistics();
+        }
+
+        function resetForm() {
+            // Reset all form fields
+            document.querySelectorAll('#user-section input, #user-section select, #user-section textarea').forEach(field => {
+                field.value = '';
+                field.style.borderColor = '#ecf0f1';
+            });
+
+            // Reset children forms
+            document.getElementById('children-forms').innerHTML = '';
+            childCounter = 0;
+
+            // Reset to step 1
+            currentStep = 1;
+            document.getElementById('form-step2').style.display = 'none';
+            document.getElementById('form-step1').style.display = 'block';
+            
+            // Reset progress indicators
+            document.getElementById('step1').className = 'progress-step active';
+            document.getElementById('step2').className = 'progress-step';
+
+            // Hide marriage details
+            document.getElementById('marriage-details').style.display = 'none';
+            
+            // Reset captcha
+            document.getElementById('captcha-input').value = '';
+            generateCaptcha();
+
+            // Reset NIP status
+            document.getElementById('nip-status').style.display = 'none';
+
+            // Reset character counter
+            document.getElementById('alamat-counter').textContent = '0/60';
+            document.getElementById('alamat-counter').className = 'char-counter';
+        }
+
+        // Alert system
+        function showAlert(type, message) {
+            const alertId = type === 'success' ? 'successAlert' : 'errorAlert';
+            const alertElement = document.getElementById(alertId);
+            alertElement.textContent = (type === 'success' ? '✅ ' : '❌ ') + message;
+            alertElement.style.display = 'block';
+            
+            setTimeout(() => {
+                alertElement.style.display = 'none';
+            }, 5000);
+            
+            // Scroll to top to show alert
+            document.querySelector('.container').scrollTop = 0;
+        }
+
+        // Admin functions
+        function adminLogin() {
+            const password = document.getElementById('admin-password').value;
+            if (password === 'admin123') {
+                document.getElementById('admin-login').style.display = 'none';
+                document.getElementById('admin-panel').style.display = 'block';
+                loadData();
+                updateStatistics();
+                
+                // Clear password field for security
+                document.getElementById('admin-password').value = '';
+            } else {
+                alert('❌ Password salah! Silakan periksa kembali password Anda.');
+                document.getElementById('admin-password').value = '';
+                document.getElementById('admin-password').focus();
+            }
+        }
+
+        function adminLogout() {
+            document.getElementById('admin-login').style.display = 'block';
+            document.getElementById('admin-panel').style.display = 'none';
+            document.getElementById('admin-password').value = '';
+        }
+
+        function loadData() {
+            const tbody = document.getElementById('data-tbody');
+            
+            if (userData.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; color: #7f8c8d; font-style: italic;">Belum ada data tersimpan</td></tr>';
+                return;
+            }
+
+            let html = '';
+            userData.forEach((data, index) => {
+                html += `
+                    <tr>
+                        <td>${index + 1}</td>
+                        <td>${data.nip}</td>
+                        <td>${data.nama}</td>
+                        <td>${data.ktp}</td>
+                        <td>${data.alamat.substring(0, 40)}${data.alamat.length > 40 ? '...' : ''}</td>
+                        <td>${data.tempat_lahir}, ${formatDate(data.tanggal_lahir)}</td>
+                        <td><span style="background: ${getStatusColor(data.status_pernikahan)}; color: white; padding: 6px 12px; border-radius: 8px; font-size: 12px; font-weight: 500;">${formatStatus(data.status_pernikahan)}</span></td>
+                        <td>
+                            <button class="btn btn-primary" onclick="viewDetail(${data.id})" style="padding: 8px 15px; font-size: 12px; margin-right: 8px;">👁️ Detail</button>
+                            <button class="btn btn-danger" onclick="deleteData(${data.id})" style="padding: 8px 15px; font-size: 12px;">🗑️ Hapus</button>
+                        </td>
+                    </tr>
+                `;
+            });
+            
+            tbody.innerHTML = html;
+        }
+
+        function updateStatistics() {
+            const total = userData.length;
+            const married = userData.filter(data => data.status_pernikahan === 'MENIKAH').length;
+            const single = userData.filter(data => data.status_pernikahan === 'BELUM_MENIKAH').length;
+
+            document.getElementById('total-records').textContent = total;
+            document.getElementById('married-count').textContent = married;
+            document.getElementById('single-count').textContent = single;
+        }
+
+        function searchData() {
+            const searchTerm = document.getElementById('search-input').value.toLowerCase();
+            const filteredData = userData.filter(data => 
+                data.nama.toLowerCase().includes(searchTerm) ||
+                data.nip.toLowerCase().includes(searchTerm) ||
+                data.ktp.toLowerCase().includes(searchTerm)
+            );
+
+            displayFilteredData(filteredData);
+        }
+
+        function displayFilteredData(data) {
+            const tbody = document.getElementById('data-tbody');
+            
+            if (data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; color: #7f8c8d; font-style: italic;">Data tidak ditemukan</td></tr>';
+                return;
+            }
+
+            let html = '';
+            data.forEach((item, index) => {
+                html += `
+                    <tr>
+                        <td>${index + 1}</td>
+                        <td>${item.nip}</td>
+                        <td>${item.nama}</td>
+                        <td>${item.ktp}</td>
+                        <td>${item.alamat.substring(0, 40)}${item.alamat.length > 40 ? '...' : ''}</td>
+                        <td>${item.tempat_lahir}, ${formatDate(item.tanggal_lahir)}</td>
+                        <td><span style="background: ${getStatusColor(item.status_pernikahan)}; color: white; padding: 6px 12px; border-radius: 8px; font-size: 12px; font-weight: 500;">${formatStatus(item.status_pernikahan)}</span></td>
+                        <td>
+                            <button class="btn btn-primary" onclick="viewDetail(${item.id})" style="padding: 8px 15px; font-size: 12px; margin-right: 8px;">👁️ Detail</button>
+                            <button class="btn btn-danger" onclick="deleteData(${item.id})" style="padding: 8px 15px; font-size: 12px;">🗑️ Hapus</button>
+                        </td>
+                    </tr>
+                `;
+            });
+            
+            tbody.innerHTML = html;
+        }
+
+        function viewDetail(id) {
+            const data = userData.find(item => item.id === id);
+            if (!data) return;
+
+            let childrenHtml = '';
+            if (data.children && data.children.length > 0) {
+                childrenHtml = '<div class="form-step-header"><h3>👶 Data Anak</h3></div>';
+                childrenHtml += '<div class="data-table-container">';
+                childrenHtml += '<table class="data-table" style="margin-top: 15px;">';
+                childrenHtml += '<thead><tr><th>No</th><th>Nama</th><th>Tempat Lahir</th><th>Tanggal Lahir</th><th>Jenis Kelamin</th><th>Pekerjaan</th></tr></thead>';
+                childrenHtml += '<tbody>';
+                
+                data.children.forEach((child, index) => {
+                    childrenHtml += `
+                        <tr>
+                            <td>${index + 1}</td>
+                            <td>${child.nama || '-'}</td>
+                            <td>${child.tempat_lahir || '-'}</td>
+                            <td>${child.tanggal_lahir ? formatDate(child.tanggal_lahir) : '-'}</td>
+                            <td>${child.jenis_kelamin || '-'}</td>
+                            <td>${child.pekerjaan || '-'}</td>
+                        </tr>
+                    `;
+                });
+                
+                childrenHtml += '</tbody></table></div>';
+            } else {
+                childrenHtml = '<div class="form-step-header"><h3>👶 Data Anak</h3></div><p style="color: #7f8c8d; font-style: italic; text-align: center; padding: 20px;">Tidak ada data anak</p>';
+            }
+
+            const modalBody = document.getElementById('modal-body');
+            modalBody.innerHTML = `
+                <h2 style="color: #2c3e50; margin-bottom: 30px; text-align: center;">📋 Detail Data Pegawai</h2>
+                
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 25px; margin-bottom: 30px;">
+                    <div>
+                        <div class="form-step-header">
+                            <h3>📊 Data Utama</h3>
+                        </div>
+                        <div style="background: linear-gradient(135deg, #ecf0f1, #d5dbdb); padding: 25px; border-radius: 15px;">
+                            <p style="margin-bottom: 10px;"><strong>NIP:</strong> ${data.nip}</p>
+                            <p style="margin-bottom: 10px;"><strong>Nama:</strong> ${data.nama}</p>
+                            <p style="margin-bottom: 10px;"><strong>No. KTP:</strong> ${data.ktp}</p>
+                            <p style="margin-bottom: 10px;"><strong>Alamat:</strong> ${data.alamat}</p>
+                            <p><strong>TTL:</strong> ${data.tempat_lahir}, ${formatDate(data.tanggal_lahir)}</p>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <div class="form-step-header">
+                            <h3>📄 Data Lanjutan</h3>
+                        </div>
+                        <div style="background: linear-gradient(135deg, #ecf0f1, #d5dbdb); padding: 25px; border-radius: 15px;">
+                            <p style="margin-bottom: 10px;"><strong>Agama:</strong> ${data.agama || '-'}</p>
+                            <p style="margin-bottom: 10px;"><strong>NPWP:</strong> ${data.npwp || '-'}</p>
+                            <p style="margin-bottom: 10px;"><strong>No. HP:</strong> ${data.no_hp || '-'}</p>
+                            <p style="margin-bottom: 10px;"><strong>No. Rekening:</strong> ${data.no_rekening || '-'}</p>
+                            <p><strong>Status Pernikahan:</strong> ${formatStatus(data.status_pernikahan)}</p>
+                        </div>
+                    </div>
+                </div>
+
+                ${(data.status_pernikahan === 'MENIKAH' || data.status_pernikahan === 'CERAI_HIDUP' || data.status_pernikahan === 'CERAI_MATI') ? `
+                <div style="margin-bottom: 30px;">
+                    <div class="form-step-header">
+                        <h3>💑 Data Keluarga</h3>
+                    </div>
+                    <div style="background: linear-gradient(135deg, #ecf0f1, #d5dbdb); padding: 25px; border-radius: 15px;">
+                        <p style="margin-bottom: 10px;"><strong>Nama Suami/Istri:</strong> ${data.nama_pasangan || '-'}</p>
+                        <p style="margin-bottom: 10px;"><strong>Tanggal Lahir:</strong> ${data.tanggal_lahir_pasangan ? formatDate(data.tanggal_lahir_pasangan) : '-'}</p>
+                        <p style="margin-bottom: 10px;"><strong>Tanggal Pernikahan:</strong> ${data.tanggal_pernikahan ? formatDate(data.tanggal_pernikahan) : '-'}</p>
+                        <p style="margin-bottom: 10px;"><strong>Tanggal Cerai:</strong> ${data.tanggal_cerai ? formatDate(data.tanggal_cerai) : '-'}</p>
+                        <p style="margin-bottom: 10px;"><strong>Tanggal Wafat:</strong> ${data.tanggal_wafat ? formatDate(data.tanggal_wafat) : '-'}</p>
+                        <p><strong>Pekerjaan:</strong> ${data.pekerjaan_pasangan || '-'}</p>
+                    </div>
+                </div>
+                ` : ''}
+
+                <div style="margin-bottom: 30px;">
+                    ${childrenHtml}
+                </div>
+
+                <div style="margin-top: 40px; text-align: center; border-top: 2px solid #ecf0f1; padding-top: 25px;">
+                    <button class="btn btn-danger" onclick="deleteData(${data.id}); closeModal();" style="margin-right: 15px;">🗑️ Hapus Data</button>
+                    <button class="btn btn-secondary" onclick="closeModal()">❌ Tutup</button>
+                </div>
+            `;
+
+            document.getElementById('detailModal').style.display = 'block';
+        }
+
+        function closeModal() {
+            document.getElementById('detailModal').style.display = 'none';
+        }
+
+        function deleteData(id) {
+            if (confirm('⚠️ Apakah Anda yakin ingin menghapus data ini? Tindakan ini tidak dapat dibatalkan.')) {
+                userData = userData.filter(item => item.id !== id);
+                saveToStorage(); // Persist changes
+                loadData();
+                updateStatistics();
+                
+                // Show success message
+                const alertElement = document.createElement('div');
+                alertElement.className = 'alert alert-success';
+                alertElement.textContent = '✅ Data berhasil dihapus!';
+                alertElement.style.display = 'block';
+                document.querySelector('#admin-panel').insertBefore(alertElement, document.querySelector('.admin-controls'));
+                
+                setTimeout(() => {
+                    alertElement.remove();
+                }, 3000);
+            }
+        }
+
+        function clearAllData() {
+            if (confirm('⚠️ PERINGATAN: Apakah Anda yakin ingin menghapus SEMUA data? Tindakan ini tidak dapat dibatalkan!')) {
+                if (confirm('🚨 KONFIRMASI TERAKHIR: Semua data pegawai akan dihapus permanen. Lanjutkan?')) {
+                    userData = [];
+                    saveToStorage(); // Persist changes
+                    loadData();
+                    updateStatistics();
+                    alert('✅ Semua data telah berhasil dihapus.');
+                }
+            }
+        }
+
+        // Enhanced Excel export function with complete children data
+        function exportToExcel() {
+            if (userData.length === 0) {
+                alert('❌ Tidak ada data untuk di-export!');
+                return;
+            }
+
+            // Create workbook
+            const wb = XLSX.utils.book_new();
+
+            // Prepare main employee data with enhanced information
+            const mainData = userData.map((data, index) => {
+                const childrenCount = data.children ? data.children.length : 0;
+                const childrenNames = data.children && data.children.length > 0 
+                    ? data.children.map(child => child.nama).join('; ') 
+                    : '-';
+
+                return {
+                    'No': index + 1,
+                    'NIP': data.nip,
+                    'Nama Lengkap': data.nama,
+                    'No. KTP': data.ktp,
+                    'Alamat': data.alamat,
+                    'Tempat Lahir': data.tempat_lahir,
+                    'Tanggal Lahir': formatDate(data.tanggal_lahir),
+                    'Agama': data.agama || '-',
+                    'NPWP': data.npwp || '-',
+                    'No. HP': data.no_hp || '-',
+                    'No. Rekening': data.no_rekening || '-',
+                    'Status Pernikahan': formatStatus(data.status_pernikahan),
+                    'Nama Suami/Istri': data.nama_pasangan || '-',
+                    'Tempat Lahir Suami/Istri': data.tempat_lahir_pasangan || '-',
+                    'TTL Suami/Istri': data.tempat_lahir_pasangan && data.tanggal_lahir_pasangan ? 
+                        `${data.tempat_lahir_pasangan}, ${formatDate(data.tanggal_lahir_pasangan)}` : 
+                        (data.tanggal_lahir_pasangan ? formatDate(data.tanggal_lahir_pasangan) : '-'),
+                    'Tanggal Pernikahan': data.tanggal_pernikahan ? formatDate(data.tanggal_pernikahan) : '-',
+                    'Tanggal Cerai': data.tanggal_cerai ? formatDate(data.tanggal_cerai) : '-',
+                    'Tanggal Wafat': data.tanggal_wafat ? formatDate(data.tanggal_wafat) : '-',
+                    'Pekerjaan Suami/Istri': data.pekerjaan_pasangan || '-',
+                    'Jumlah Anak': childrenCount,
+                    'Nama-nama Anak': childrenNames,
+                    'Tanggal Input': new Date(data.timestamp).toLocaleDateString('id-ID', {
+                        day: '2-digit',
+                        month: '2-digit', 
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    })
+                };
+            });
+
+            // Create main employee worksheet with enhanced formatting
+            const mainWs = XLSX.utils.json_to_sheet(mainData);
+            
+            // Set column widths for main sheet
+            const mainColWidths = [
+                {wch: 5},   // No
+                {wch: 22},  // NIP
+                {wch: 35},  // Nama
+                {wch: 20},  // KTP
+                {wch: 45},  // Alamat
+                {wch: 18},  // Tempat Lahir
+                {wch: 15},  // Tanggal Lahir
+                {wch: 12},  // Agama
+                {wch: 20},  // NPWP
+                {wch: 16},  // No HP
+                {wch: 20},  // Rekening
+                {wch: 18},  // Status
+                {wch: 30},  // Nama Pasangan
+                {wch: 20},  // Tempat Lahir Pasangan
+                {wch: 25},  // TTL Pasangan
+                {wch: 16},  // Tgl Nikah
+                {wch: 14},  // Tgl Cerai
+                {wch: 14},  // Tgl Wafat
+                {wch: 25},  // Pekerjaan Pasangan
+                {wch: 12},  // Jumlah Anak
+                {wch: 50},  // Nama-nama Anak
+                {wch: 18}   // Tanggal Input
+            ];
+            mainWs['!cols'] = mainColWidths;
+            
+            XLSX.utils.book_append_sheet(wb, mainWs, 'Data Pegawai');
+
+            // Prepare detailed children data for separate sheet
+            const childrenData = [];
+            let childRowNumber = 1;
+
+            userData.forEach((employee) => {
+                if (employee.children && employee.children.length > 0) {
+                    employee.children.forEach((child) => {
+                        childrenData.push({
+                            'No': childRowNumber++,
+                            'NIP Orangtua': employee.nip,
+                            'Nama Orangtua': employee.nama,
+                            'Anak Ke': child.urutan || '',
+                            'Nama Anak': child.nama || '-',
+                            'Tempat Lahir': child.tempat_lahir || '-',
+                            'Tanggal Lahir': child.tanggal_lahir ? formatDate(child.tanggal_lahir) : '-',
+                            'Umur': child.tanggal_lahir ? calculateAge(child.tanggal_lahir) + ' tahun' : '-',
+                            'Jenis Kelamin': child.jenis_kelamin || '-',
+                            'Pekerjaan': child.pekerjaan || '-',
+                            'Status': child.pekerjaan ? 'Sudah Bekerja' : 'Belum Bekerja',
+                            'Tanggal Input': new Date(employee.timestamp).toLocaleDateString('id-ID')
+                        });
+                    });
+                }
+            });
+
+            // Create children worksheet if there's data
+            if (childrenData.length > 0) {
+                const childrenWs = XLSX.utils.json_to_sheet(childrenData);
+                
+                // Set column widths for children sheet
+                const childrenColWidths = [
+                    {wch: 5},   // No
+                    {wch: 22},  // NIP Orangtua
+                    {wch: 30},  // Nama Orangtua
+                    {wch: 10},  // Anak Ke
+                    {wch: 30},  // Nama Anak
+                    {wch: 18},  // Tempat Lahir
+                    {wch: 15},  // Tanggal Lahir
+                    {wch: 12},  // Umur
+                    {wch: 18},  // Jenis Kelamin
+                    {wch: 25},  // Pekerjaan
+                    {wch: 15},  // Status
+                    {wch: 15}   // Tanggal Input
+                ];
+                childrenWs['!cols'] = childrenColWidths;
+                
+                XLSX.utils.book_append_sheet(wb, childrenWs, 'Data Anak Lengkap');
+            }
+
+            // Create summary statistics sheet
+            const totalEmployees = userData.length;
+            const marriedCount = userData.filter(data => data.status_pernikahan === 'MENIKAH').length;
+            const singleCount = userData.filter(data => data.status_pernikahan === 'BELUM_MENIKAH').length;
+            const divorcedCount = userData.filter(data => data.status_pernikahan === 'CERAI_HIDUP' || data.status_pernikahan === 'CERAI_MATI').length;
+            const totalChildren = childrenData.length;
+
+            const summaryData = [
+                { 'Kategori': 'Total Pegawai', 'Jumlah': totalEmployees },
+                { 'Kategori': 'Sudah Menikah', 'Jumlah': marriedCount },
+                { 'Kategori': 'Belum Menikah', 'Jumlah': singleCount },
+                { 'Kategori': 'Cerai/Janda-Duda', 'Jumlah': divorcedCount },
+                { 'Kategori': 'Total Anak', 'Jumlah': totalChildren },
+                { 'Kategori': 'Rata-rata Anak per Pegawai', 'Jumlah': totalEmployees > 0 ? (totalChildren / totalEmployees).toFixed(2) : 0 },
+                { 'Kategori': 'Tanggal Export', 'Jumlah': new Date().toLocaleDateString('id-ID') }
+            ];
+
+            const summaryWs = XLSX.utils.json_to_sheet(summaryData);
+            summaryWs['!cols'] = [{wch: 25}, {wch: 15}];
+            XLSX.utils.book_append_sheet(wb, summaryWs, 'Ringkasan');
+
+            // Generate filename with current date and time
+            const now = new Date();
+            const dateStr = now.toISOString().split('T')[0];
+            const timeStr = now.toTimeString().split(' ')[0].replace(/:/g, '');
+            const filename = `Data_Pegawai_${dateStr}_${timeStr}.xlsx`;
+
+            // Save file
+            XLSX.writeFile(wb, filename);
+            
+            const childrenInfo = childrenData.length > 0 ? ` Data lengkap ${childrenData.length} anak tersedia di sheet "Data Anak Lengkap".` : '';
+            const summaryInfo = ` Ringkasan statistik tersedia di sheet "Ringkasan".`;
+            alert(`✅ Export berhasil!\n\nFile: ${filename}\nData pegawai: ${totalEmployees} record${childrenInfo}${summaryInfo}`);
+        }
+
+        // Utility functions
+        function formatDate(dateString) {
+            if (!dateString) return '-';
+            const date = new Date(dateString);
+            return date.toLocaleDateString('id-ID', { 
+                day: '2-digit', 
+                month: '2-digit', 
+                year: 'numeric' 
+            });
+        }
+
+        function calculateAge(birthDate) {
+            if (!birthDate) return 0;
+            const today = new Date();
+            const birth = new Date(birthDate);
+            let age = today.getFullYear() - birth.getFullYear();
+            const monthDiff = today.getMonth() - birth.getMonth();
+            
+            if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+                age--;
+            }
+            
+            return Math.max(0, age);
+        }
+
+        function formatStatus(status) {
+            const statusMap = {
+                'BELUM_MENIKAH': 'Belum Menikah',
+                'MENIKAH': 'Menikah',
+                'CERAI_HIDUP': 'Cerai Hidup',
+                'CERAI_MATI': 'Cerai Mati'
+            };
+            return statusMap[status] || '-';
+        }
+
+        function getStatusColor(status) {
+            const colorMap = {
+                'BELUM_MENIKAH': 'linear-gradient(135deg, #95a5a6, #7f8c8d)',
+                'MENIKAH': 'linear-gradient(135deg, #27ae60, #229954)',
+                'CERAI_HIDUP': 'linear-gradient(135deg, #f39c12, #e67e22)',
+                'CERAI_MATI': 'linear-gradient(135deg, #e74c3c, #c0392b)'
+            };
+            return colorMap[status] || 'linear-gradient(135deg, #95a5a6, #7f8c8d)';
+        }
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const modal = document.getElementById('detailModal');
+            if (event.target == modal) {
+                modal.style.display = 'none';
+            }
+        }
+
+        // Form validation and auto-uppercase handling
+        document.addEventListener('input', function(e) {
+            // Handle specific field validations
+            if (e.target.id === 'nip') {
+                e.target.value = e.target.value.replace(/\D/g, '');
+                // Check for duplicate after user stops typing
+                clearTimeout(e.target.timer);
+                e.target.timer = setTimeout(() => {
+                    checkNIPDuplicate();
+                }, 500);
+            } else if (e.target.id === 'ktp') {
+                e.target.value = e.target.value.replace(/\D/g, '').substring(0, 16);
+            } else if (e.target.id === 'npwp') {
+                e.target.value = e.target.value.replace(/\D/g, '').substring(0, 15);
+            } else if (e.target.id === 'no_hp') {
+                let value = e.target.value.replace(/\D/g, '');
+                if (value && !value.startsWith('08')) {
+                    value = '08' + value;
+                }
+                e.target.value = value;
+            } else if (e.target.id === 'no_rekening') {
+                e.target.value = e.target.value.replace(/\D/g, '');
+            }
+            
+            // Handle auto-uppercase for specific fields
+            if (e.target.classList.contains('auto-uppercase') || 
+                e.target.id === 'nama' || 
+                e.target.id === 'alamat' || 
+                e.target.id === 'tempat_lahir' ||
+                e.target.id === 'nama_pasangan' ||
+                e.target.id === 'tempat_lahir_pasangan' ||
+                e.target.id === 'pekerjaan_pasangan' ||
+                e.target.id.includes('anak_nama_') ||
+                e.target.id.includes('anak_tempat_lahir_') ||
+                e.target.id.includes('anak_pekerjaan_')) {
+                
+                const cursorPosition = e.target.selectionStart;
+                e.target.value = e.target.value.toUpperCase();
+                e.target.setSelectionRange(cursorPosition, cursorPosition);
+            }
+        });
+
+        // Captcha input validation
+        document.addEventListener('input', function(e) {
+            if (e.target.id === 'captcha-input') {
+                e.target.value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').substring(0, 6);
+            }
+        });
+
+        // Enter key support for captcha and admin login
+        document.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                if (e.target.id === 'captcha-input') {
+                    nextStep();
+                } else if (e.target.id === 'admin-password') {
+                    adminLogin();
+                }
+            }
+        });
+
+        // Load existing data on page load
+        window.addEventListener('load', function() {
+            const existingData = sessionStorage.getItem('employeeData');
+            if (existingData) {
+                userData = JSON.parse(existingData);
+                updateStatistics();
+            }
+        });
+
+        // Periodic data refresh for real-time updates
+        setInterval(function() {
+            const currentData = sessionStorage.getItem('employeeData');
+            if (currentData) {
+                const parsedData = JSON.parse(currentData);
+                if (parsedData.length !== userData.length) {
+                    userData = parsedData;
+                    if (document.getElementById('admin-panel').style.display !== 'none') {
+                        loadData();
+                        updateStatistics();
+                    }
+                }
+            }
+        }, 3000); // Check for updates every 3 seconds
+    </script>
+</body>
+</html>
